@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_accent_app/screens/components/quiz_outlined_button.dart';
 import 'package:flutter_accent_app/screens/dictionary_screen.dart';
 import 'package:flutter_accent_app/services.dart';
 
@@ -30,56 +31,68 @@ class _SettingsScreenState extends State<SettingsScreen> {
           },
         ),
       ),
-      body: FutureBuilder<int>(
-        future: getData(),
-        builder: (context, snapshot) {
-          int count = 0;
-          if (snapshot.hasData) {
-            count = snapshot.data;
-          } else if (snapshot.hasError) {
-            print(snapshot.error.toString());
-          }
-          return ListView(
-            shrinkWrap: true,
-            children: [
-              SizedBox(height: 30.0),
-              buildSettingsContainer(
-                  context, 'Всего слов: ' + count.toString()),
-            ],
-          );
-        },
+      body: Column(
+        children: [
+          FutureBuilder<int>(
+            future: getData(),
+            builder: (context, snapshot) {
+              int count = 0;
+              if (snapshot.hasData) {
+                count = snapshot.data;
+              } else if (snapshot.hasError) {
+                print(snapshot.error.toString());
+              }
+              return ListView(
+                shrinkWrap: true,
+                children: [
+                  SizedBox(height: 30.0),
+                  buildSettingsContainer(
+                      context, 'Всего слов: ' + count.toString()),
+                ],
+              );
+            },
+          ),
+          QuizOutlinedButton(
+            text: 'Сбросить настройки',
+            onPressed: (){
+              setState(() {
+                createDictionary();
+              });
+            },
+          ),
+        ],
       ),
     );
   }
 
-  Container buildSettingsContainer(BuildContext context, String text) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-      decoration: BoxDecoration(
-        color: Theme.of(context).focusColor,
-        borderRadius: BorderRadius.circular(5.0),
-      ),
-      child: Row(
-        children: [
-          Text(text, style: Theme.of(context).textTheme.bodyText1),
-          Spacer(),
-          IconButton(
-            icon: Icon(
+  GestureDetector buildSettingsContainer(BuildContext context, String text) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (BuildContext context) => DictionaryScreen(),
+          ),
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+        decoration: BoxDecoration(
+          color: Theme.of(context).focusColor,
+          borderRadius: BorderRadius.circular(5.0),
+        ),
+        child: Row(
+          children: [
+            Text(text, style: Theme.of(context).textTheme.bodyText1),
+            Spacer(),
+            Icon(
               Icons.edit_outlined,
               color: Theme.of(context).textTheme.bodyText1.color,
             ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (BuildContext context) => DictionaryScreen(),
-                ),
-              );
-            },
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

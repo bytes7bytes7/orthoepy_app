@@ -1,11 +1,9 @@
 import 'dart:async';
-
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
-class QuizOutlineButton extends StatefulWidget {
-  QuizOutlineButton({
+class QuizOutlinedButton extends StatefulWidget {
+  QuizOutlinedButton({
     Key key,
     @required this.text,
     @required this.onPressed,
@@ -25,11 +23,10 @@ class QuizOutlineButton extends StatefulWidget {
   final StreamController streamController;
 
   @override
-  _QuizOutlineButtonState createState() => _QuizOutlineButtonState();
+  _QuizOutlinedButtonState createState() => _QuizOutlinedButtonState();
 }
 
-class _QuizOutlineButtonState extends State<QuizOutlineButton> {
-
+class _QuizOutlinedButtonState extends State<QuizOutlinedButton> {
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -43,7 +40,7 @@ class _QuizOutlineButtonState extends State<QuizOutlineButton> {
           Color backgroundColor = Theme.of(context).backgroundColor;
           Color fontColor = Theme.of(context).textTheme.button.color;
           if (snapshot.hasData) {
-            if ((widget.index == widget.rightIndex || snapshot.data==widget.index)&&snapshot.data!=-1) {
+            if ((widget.index == widget.rightIndex || snapshot.data == widget.index) && snapshot.data != -1) {
               //print(widget.index.toString()+' : '+snapshot.data.toString());
               backgroundColor = widget.selectedColor;
               fontColor = Theme.of(context).backgroundColor;
@@ -58,14 +55,27 @@ class _QuizOutlineButtonState extends State<QuizOutlineButton> {
               ),
               color: backgroundColor,
             ),
-            child: OutlineButton(
-              borderSide: BorderSide(
-                color: Theme.of(context).buttonColor,
+            child: OutlinedButton(
+              style: ButtonStyle(
+                overlayColor: MaterialStateProperty.resolveWith(
+                    (states) => Theme.of(context).focusColor),
+                backgroundColor: MaterialStateProperty.resolveWith(
+                    (states) => Colors.transparent),
+                shape: MaterialStateProperty.resolveWith(
+                  (states) => RoundedRectangleBorder(
+                    side: BorderSide(
+                      color: Theme.of(context).buttonColor,
+                    ),
+                  ),
+                ),
+                // borderSide: BorderSide(
+                //   color: Theme.of(context).buttonColor,
+                // ),
+                // fade when you hold the button
+                // highlightColor: Colors.transparent,
+                // animated circle when you hold the button
+                // splashColor: Theme.of(context).focusColor,
               ),
-              // fade when you hold the button
-              highlightColor: Colors.transparent,
-              // animated circle when you hold the button
-              splashColor: Theme.of(context).focusColor,
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12.0),
                 alignment: Alignment.center,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'settings_screen.dart';
 import 'quiz_screen.dart';
-import 'components/quiz_outline_button.dart';
+import 'components/quiz_outlined_button.dart';
 
 class HomeScreen extends StatelessWidget {
 
@@ -21,7 +21,7 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            QuizOutlineButton(
+            QuizOutlinedButton(
               text: firstButtonTitle,
               onPressed: () {
                 print(firstButtonTitle);
@@ -36,7 +36,7 @@ class HomeScreen extends StatelessWidget {
                 );
               },
             ),
-            QuizOutlineButton(
+            QuizOutlinedButton(
               text: secondButtonTitle,
               onPressed: () {
                 print(secondButtonTitle);

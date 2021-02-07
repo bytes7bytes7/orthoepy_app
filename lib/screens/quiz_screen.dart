@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_accent_app/const.dart';
-import 'package:flutter_accent_app/screens/components/quiz_outline_button.dart';
+import 'package:flutter_accent_app/screens/components/quiz_outlined_button.dart';
 import 'package:flutter_accent_app/services.dart';
 import 'dart:math';
 import 'dart:async';
@@ -38,7 +38,7 @@ class _QuizScreenState extends State<QuizScreen> {
     super.initState();
     streamController = StreamController<int>.broadcast();
     stream = streamController.stream;
-    all = widget.isRandom ? infinity : '0';
+    all = widget.isRandom ? kInfinity : '0';
   }
 
   Future<String> getNext() async {
@@ -56,7 +56,7 @@ class _QuizScreenState extends State<QuizScreen> {
       }
       now += 1;
       //print('value: ' + value.split('\n')[currentIndex]);
-      all = widget.isRandom ? infinity : lst.length.toString();
+      all = widget.isRandom ? kInfinity : lst.length.toString();
       return lst[currentIndex];
     }).catchError((error) {
       print(error.toString());
@@ -118,7 +118,7 @@ class _QuizScreenState extends State<QuizScreen> {
                     shrinkWrap: true,
                     children: [
                       for (int i = 0; i < accentList.length; i++)
-                        QuizOutlineButton(
+                        QuizOutlinedButton(
                           index: i,
                           rightIndex: accentList.indexOf(rightAnswer),
                           stream: stream,
