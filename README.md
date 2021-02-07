@@ -1,16 +1,10 @@
-# flutter_accent_app
+# Orthoepy
 
-Flutter application for learning orthoepy
+Приложения для тренировки ударения в русском языке, написанное на Flutter.
+<br>
+Скачать релизы <a href="https://github.com/avirias/Grey/releases">здесь</a>.
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+# Screenshots
+<img src="screenshots/home1.png" height="520px"><img src="screenshots/home2.png" height="520px"><img src="screenshots/album.png" height="520px">
+<img src="screenshots/album_view.png" height="520px"><img src="screenshots/songs.png" height="520px"><img src="screenshots/now_playing.png" height="500px">
+<img src="screenshots/artist.png" height="520px"><img src="screenshots/artist_view.png" height="520px"><img src="screenshots/playlist.png" height="520px">
