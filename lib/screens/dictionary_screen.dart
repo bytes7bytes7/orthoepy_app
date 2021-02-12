@@ -21,7 +21,7 @@ class DictionaryScreen extends StatefulWidget {
 
 class _DictionaryScreenState extends State<DictionaryScreen>
     with TickerProviderStateMixin {
-  //TODO: add refresh function (pull down and refresh)
+
   AnimationController animationController;
   Animation animation;
   Stream scrollStream;
@@ -32,8 +32,9 @@ class _DictionaryScreenState extends State<DictionaryScreen>
   Map<String, int> map;
   bool loading;
   bool started;
+  List<String> mapKeys;
 
-  initWords() async {
+  getWords() async {
     loading = true;
     Map<dynamic, dynamic> m = await readFile().then((map) {
       List<String> result = map.keys.toList();
@@ -45,13 +46,11 @@ class _DictionaryScreenState extends State<DictionaryScreen>
       if (part.keys.length == 0) {
         print('empty');
         return Future.delayed(const Duration(milliseconds: 500), () {
-          loading = false;
           widget.streamController.add(0);
           return {};
         });
       }
       return Future.delayed(const Duration(milliseconds: 500), () {
-        loading = false;
         widget.streamController.add(part.length);
         return part;
       });
@@ -59,12 +58,14 @@ class _DictionaryScreenState extends State<DictionaryScreen>
       print(error.toString());
       return Future.delayed(const Duration(milliseconds: 500), () {
         print('READ ERROR');
-        loading = false;
         widget.streamController.add(-1);
         return {};
       });
     });
     (m.length == 0) ? map = {} : map = m;
+    mapKeys = map.keys.toList();
+    print('init finished');
+    loading = false;
   }
 
   @override
@@ -91,7 +92,7 @@ class _DictionaryScreenState extends State<DictionaryScreen>
       ..addListener(() {
         setState(() {});
       });
-    initWords();
+    getWords();
   }
 
   bool check() {
@@ -155,7 +156,7 @@ class _DictionaryScreenState extends State<DictionaryScreen>
               stream: widget.stream,
               builder: (context, snapshot) {
                 if (snapshot.hasData && snapshot.data == -1) {
-                  initWords();
+                  getWords();
                   started = false;
                 } else if (snapshot.data == 0) {
                   map = {};
@@ -191,13 +192,13 @@ class _DictionaryScreenState extends State<DictionaryScreen>
                           children: List.generate(
                             map.length,
                             (index) {
-                              List<String> keys = map.keys.toList();
+                              print('generate');
                               return CustomOutlinedButton(
-                                text: keys[index],
-                                isActive: map[keys[index]] == 1,
+                                text: mapKeys[index],
+                                isActive: map[mapKeys[index]] == 1,
                                 onPressed: () {
                                   _showEditDialog(context, replaceFile,
-                                      kEditTitle, keys[index]);
+                                      kEditTitle, mapKeys[index]);
                                 },
                               );
                             },

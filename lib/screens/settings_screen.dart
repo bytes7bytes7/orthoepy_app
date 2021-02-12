@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_accent_app/screens/components/custom_outlined_button.dart';
 import 'package:flutter_accent_app/screens/dictionary_screen.dart';
@@ -11,6 +10,8 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  // TODO: add CheckBox to manually move to next word or to move by timer
+
   Stream stream;
   StreamController<int> streamController;
 
@@ -90,7 +91,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             text: 'Очистить словарь',
             onPressed: () {
               setState(() {
-                writeFile('',1);
+                writeFile('', 1);
                 getData();
               });
             },

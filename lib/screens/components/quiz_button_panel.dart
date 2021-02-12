@@ -19,10 +19,17 @@ class QuizButtonPanel extends StatefulWidget {
 class _QuizButtonPanelState extends State<QuizButtonPanel> {
   // wrong and right
   List<int> answers = [-1, -1];
+  List<String> _accentList;
+
+  @override
+  void initState() {
+    super.initState();
+    _accentList=widget.accentList;
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.rightIndex != answers[1]) answers = [-1, -1];
+    if (_accentList!=widget.accentList) answers = [-1, -1];
     return Expanded(
       child: Center(
         child: ListView(

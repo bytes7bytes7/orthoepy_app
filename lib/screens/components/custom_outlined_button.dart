@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_accent_app/services.dart';
 
@@ -20,10 +19,12 @@ class CustomOutlinedButton extends StatefulWidget {
 
 class _CustomOutlinedButtonState extends State<CustomOutlinedButton> {
   bool _isActive;
+  String _text;
 
   @override
   void initState() {
     super.initState();
+    _text = widget.text;
     if (widget.isActive != null) {
       (widget.isActive) ? _isActive = true : _isActive = false;
     }
@@ -31,6 +32,8 @@ class _CustomOutlinedButtonState extends State<CustomOutlinedButton> {
 
   @override
   Widget build(BuildContext context) {
+    if (_text != widget.text)
+      (widget.isActive) ? _isActive = true : _isActive = false;
     return Container(
       margin: const EdgeInsets.symmetric(
         vertical: 10.0,
@@ -86,9 +89,7 @@ class _CustomOutlinedButtonState extends State<CustomOutlinedButton> {
                   child: Text(
                     widget.text,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context)
-                        .textTheme
-                        .button,
+                    style: Theme.of(context).textTheme.button,
                   ),
                 ),
                 (widget.isActive != null) ? Spacer() : SizedBox.shrink(),

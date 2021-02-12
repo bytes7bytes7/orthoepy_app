@@ -24,6 +24,41 @@ class _QuizScreenState extends State<QuizScreen> {
   List<String> accentList = [];
   int currentIndex = 0, now = 0;
   String all;
+  int delta = 0;
+
+  Future<String> getNext() async {
+    int tmp;
+    Map<String, int> map = await readFile();
+    List<String> keys = map.keys.toList();
+    do {
+      if (widget.isRandom) {
+        var rng = Random();
+        while (true) {
+          tmp = rng.nextInt(map.length);
+          if (tmp != currentIndex) {
+            currentIndex = tmp;
+            break;
+          }
+        }
+      } else {
+        currentIndex++;
+      }
+      if (currentIndex >= map.length) {
+        currentIndex = 0;
+      }
+    } while (map[keys[currentIndex]] == 0);
+    now += 1;
+    all = widget.isRandom ? kInfinity : (map.length - delta).toString();
+    return keys[currentIndex];
+  }
+
+  initDelta() async {
+    Map<String, int> map = await readFile();
+    map.forEach((key, value) {
+      if (value == 0) delta++;
+    });
+    print('delta init');
+  }
 
   @override
   void dispose() {
@@ -34,25 +69,9 @@ class _QuizScreenState extends State<QuizScreen> {
   void initState() {
     super.initState();
     all = widget.isRandom ? kInfinity : '0';
-  }
-
-  Future<String> getNext() async {
-    Map<String, int> map = await readFile();
-    List<String> keys = map.keys.toList();
-    do {
-      if (widget.isRandom) {
-        var rng = new Random();
-        currentIndex = rng.nextInt(map.length);
-      } else {
-        currentIndex++;
-      }
-      if (currentIndex >= map.length) {
-        currentIndex = 0;
-      }
-    } while (map[keys[currentIndex]] == 0);
-    now += 1;
-    all = widget.isRandom ? kInfinity : map.length.toString();
-    return keys[currentIndex];
+    if (!widget.isRandom) {
+      initDelta();
+    }
   }
 
   @override
@@ -88,21 +107,23 @@ class _QuizScreenState extends State<QuizScreen> {
           } else {
             word = '';
           }
-          return Column(
-            children: [
-              SizedBox(height: 40.0),
-              buildWordContainer(word.toLowerCase(), word, now.toString(), all,
-                  containerSize, iconSize, size, context),
-              QuizButtonPanel(
-                accentList: accentList,
-                rightIndex: accentList.indexOf(rightAnswer),
-                onPressed: () {
-                  Future.delayed(const Duration(seconds: 2), () {
-                    setState(() {});
-                  });
-                },
-              ),
-            ],
+          return Container(
+            child: Column(
+              children: [
+                SizedBox(height: 40.0),
+                buildWordContainer(word.toLowerCase(), word, now.toString(),
+                    all, containerSize, iconSize, size, context),
+                QuizButtonPanel(
+                  accentList: accentList,
+                  rightIndex: accentList.indexOf(rightAnswer),
+                  onPressed: () {
+                    Future.delayed(const Duration(seconds: 2), () {
+                      setState(() {});
+                    });
+                  },
+                ),
+              ],
+            ),
           );
         },
       ),
