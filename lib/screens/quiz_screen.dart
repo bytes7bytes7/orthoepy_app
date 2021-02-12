@@ -22,7 +22,7 @@ class QuizScreen extends StatefulWidget {
 class _QuizScreenState extends State<QuizScreen> {
   String word = '', rightAnswer;
   List<String> accentList = [];
-  int currentIndex = 0, now = 0;
+  int currentIndex = -1, now = 0;
   String all;
   int delta = 0;
 

@@ -24,12 +24,15 @@ class _QuizButtonPanelState extends State<QuizButtonPanel> {
   @override
   void initState() {
     super.initState();
-    _accentList=widget.accentList;
+    _accentList = widget.accentList;
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_accentList!=widget.accentList) answers = [-1, -1];
+    if (_accentList != widget.accentList) {
+      _accentList=widget.accentList;
+      answers = [-1, -1];
+    }
     return Expanded(
       child: Center(
         child: ListView(
