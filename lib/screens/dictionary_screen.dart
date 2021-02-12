@@ -21,7 +21,6 @@ class DictionaryScreen extends StatefulWidget {
 
 class _DictionaryScreenState extends State<DictionaryScreen>
     with TickerProviderStateMixin {
-
   AnimationController animationController;
   Animation animation;
   Stream scrollStream;
@@ -217,6 +216,8 @@ class _DictionaryScreenState extends State<DictionaryScreen>
   }
 
   Widget buildSearchPanel(Function editFunction) {
+    // TODO: remove lags (maybe with BLoC)
+
     return Container(
       margin: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 10.0),
       padding: const EdgeInsets.symmetric(horizontal: 10.0),
@@ -237,11 +238,9 @@ class _DictionaryScreenState extends State<DictionaryScreen>
           Expanded(
             child: TextField(
               controller: textEditingController,
-              onChanged: (value) {
-                setState(() {
-                  searchWord = textEditingController.text;
-                  widget.streamController.add(-1);
-                });
+              onChanged: (value) async {
+                searchWord = textEditingController.text;
+                widget.streamController.add(-1);
               },
               cursorColor: Theme.of(context).focusColor,
               cursorWidth: 3.0,
