@@ -1,104 +1,225 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_accent_app/const.dart';
 import 'package:flutter_accent_app/screens/components/quiz_outlined_button.dart';
 import 'package:flutter_accent_app/services.dart';
 
 class DictionaryScreen extends StatefulWidget {
+  const DictionaryScreen({
+    Key key,
+    @required this.stream,
+    @required this.streamController,
+  }) : super(key: key);
+
+  final Stream stream;
+  final StreamController streamController;
+
   @override
   _DictionaryScreenState createState() => _DictionaryScreenState();
 }
 
-class _DictionaryScreenState extends State<DictionaryScreen> {
+class _DictionaryScreenState extends State<DictionaryScreen>
+    with TickerProviderStateMixin {
   //TODO: add refresh function (pull down and refresh)
+  AnimationController animationController;
+  Animation animation;
+  Stream scrollStream;
+  StreamController<double> scrollStreamController;
+  ScrollController listViewController;
   TextEditingController textEditingController;
   String searchWord = '';
+  List<String> lst;
+  bool loading;
+  bool started;
 
-  Future<List<String>> getWords() async {
-    return await readFile().then((value) {
-      List<String> lst = value.split('\n');
-      List<String> part = [];
-      lst.forEach((element) {
-        if (element.toLowerCase().contains(searchWord.toLowerCase()))
-          part.add(element);
-      });
-      return part;
-    }).catchError((error) {
-      print(error.toString());
-      return [''];
-    });
-  }
-
-  update() {
-    setState(() {});
+  initWords() async {
+    loading = true;
+    lst = await readFile().then((value) {
+          List<String> result = value.split('\n');
+          List<String> part = [];
+          result.forEach((element) {
+            if (element.toLowerCase().contains(searchWord.toLowerCase()))
+              part.add(element);
+          });
+          if (part.length == 1 && part[0] == '') {
+            print('empty');
+            return Future.delayed(const Duration(milliseconds: 500), () {
+              loading = false;
+              widget.streamController.add(0);
+              return null;
+            });
+          }
+          return Future.delayed(const Duration(milliseconds: 500), () {
+            loading = false;
+            widget.streamController.add(part.length);
+            return part;
+          });
+        }).catchError((error) {
+          print(error.toString());
+          return Future.delayed(const Duration(milliseconds: 500), () {
+            print('READ ERROR');
+            loading = false;
+            widget.streamController.add(-1);
+            return null;
+          });
+        }) ??
+        [];
   }
 
   @override
   void dispose() {
     textEditingController.dispose();
+    listViewController.dispose();
+    scrollStreamController.close();
+    animationController.dispose();
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
+    started=true;
     textEditingController = TextEditingController();
+    listViewController = ScrollController();
+    scrollStreamController = StreamController<double>();
+    scrollStream = scrollStreamController.stream;
+    scrollStreamController.add(0.0);
+    animationController = AnimationController(
+        duration: Duration(milliseconds: 1000), vsync: this);
+    animation = Tween(begin: 0.0, end: 1.0).animate(animationController)
+      ..addListener(() {
+        setState(() {});
+      });
+    initWords();
+  }
+
+  bool check() {
+    if (lst != null && lst.length > 10) {
+      if (listViewController.hasClients) {
+        if (listViewController.position.pixels > 200) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: Text(
-          'Словарь',
-          style: Theme.of(context).textTheme.headline1,
+    return NotificationListener(
+      onNotification: (notificationInfo) {
+        if (notificationInfo is ScrollNotification) {
+          scrollStreamController.add(notificationInfo.metrics.pixels);
+        }
+        return true;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          centerTitle: true,
+          title: Text(
+            'Словарь',
+            style: Theme.of(context).textTheme.headline1,
+          ),
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back_ios_rounded),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
         ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_rounded),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-      ),
-      body: FutureBuilder<List<String>>(
-        future: getWords(),
-        builder: (BuildContext context, AsyncSnapshot<List<String>> snapshot) {
-          List<String> lst = [];
-          if (snapshot.hasData) {
-            lst = snapshot.data;
-          } else if (snapshot.hasError) {
-            print(snapshot.error.toString());
-          }
-          return ListView(
-            children: [
-              Column(
-                children: List.generate(lst.length + 1, (index) {
-                  if (index == 0)
-                    return buildSearchPanel(update,appendFile);
-                  else
-                    return QuizOutlinedButton(
-                      index: index - 1,
-                      //stream: stream,
-                      //streamController: streamController,
-                      text: lst[index - 1],
-                      // selectedColor: rightAnswer == accentList[i]
-                      //     ? Theme.of(context).primaryColor
-                      //     : Theme.of(context).errorColor,
-                      onPressed: () {
-                        _showEditDialog(
-                            context, update,replaceFile, 'Править', lst[index - 1]);
-                      },
-                    );
-                }),
-              ),
-            ],
-          );
-        },
+        floatingActionButton: StreamBuilder(
+            stream: scrollStream,
+            builder: (BuildContext context, AsyncSnapshot snapshot) {
+              if (check()) {
+                return FloatingActionButton(
+                  tooltip: 'Вверх',
+                  elevation: 4.0,
+                  onPressed: () {
+                    listViewController
+                        .jumpTo(listViewController.position.minScrollExtent);
+                  },
+                  child: Icon(
+                    Icons.keyboard_arrow_up,
+                  ),
+                  backgroundColor: Theme.of(context).primaryColor,
+                );
+              } else {
+                return SizedBox.shrink();
+              }
+            }),
+        body: StreamBuilder<int>(
+            stream: widget.stream,
+            builder: (context, snapshot) {
+              if (snapshot.hasData && snapshot.data==-1) {
+                initWords();
+                started=false;
+              }
+              return Column(
+                children: [
+                  buildSearchPanel(appendFile),
+                  loading && started
+                      ? Expanded(
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  Theme.of(context).primaryColor),
+                            ),
+                          ),
+                        )
+                      : lst == null || lst.length == 0
+                          ? Expanded(
+                              child: Center(
+                                child: Text(
+                                  'Список пуст!',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headline1
+                                      .copyWith(
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                ),
+                              ),
+                            )
+                          : Expanded(
+                              child: ListView(
+                                shrinkWrap: true,
+                                controller: listViewController,
+                                physics: AlwaysScrollableScrollPhysics(),
+                                children: [
+                                  Column(
+                                    children: List.generate(
+                                      lst.length,
+                                      (index) {
+                                        return QuizOutlinedButton(
+                                          index: index,
+                                          text: lst[index],
+                                          onPressed: () {
+                                            _showEditDialog(
+                                                context,
+                                                replaceFile,
+                                                'Править',
+                                                lst[index]);
+                                          },
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                ],
+              );
+            }),
       ),
     );
   }
 
-  Widget buildSearchPanel(Function update,Function editFunction) {
+  void search() async{
+    widget.streamController.add(-1);
+  }
+
+  Widget buildSearchPanel(Function editFunction) {
     return Container(
       margin: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 10.0),
       padding: const EdgeInsets.symmetric(horizontal: 10.0),
@@ -118,14 +239,15 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
           ),
           Expanded(
             child: TextField(
+              controller: textEditingController,
               onChanged: (value) {
                 setState(() {
                   searchWord = textEditingController.text;
+                  search();
                 });
               },
               cursorColor: Theme.of(context).focusColor,
               cursorWidth: 3.0,
-              controller: textEditingController,
               style: Theme.of(context)
                   .textTheme
                   .headline1
@@ -150,7 +272,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
               ),
             ),
             onTap: () {
-              _showEditDialog(context, update,editFunction, 'Создать', null);
+              _showEditDialog(context, editFunction, 'Создать', null);
             },
           ),
         ],
@@ -158,7 +280,7 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
     );
   }
 
-  Future<void> _showEditDialog(BuildContext context, Function update,Function editFunction,
+  Future<void> _showEditDialog(BuildContext context, Function editFunction,
       String title, String initialWord) async {
     return showDialog<void>(
       context: context,
@@ -167,8 +289,8 @@ class _DictionaryScreenState extends State<DictionaryScreen> {
         return EditAlertDialog(
           title: title,
           initialWord: initialWord,
-          update: update,
           editFunction: editFunction,
+          streamController: widget.streamController,
         );
       },
     );
@@ -180,14 +302,14 @@ class EditAlertDialog extends StatefulWidget {
     Key key,
     @required this.title,
     @required this.initialWord,
-    @required this.update,
     @required this.editFunction,
+    @required this.streamController,
   }) : super(key: key);
 
   final String title;
   final String initialWord;
-  final Function update;
   final Function editFunction;
+  final StreamController streamController;
 
   @override
   _EditAlertDialogState createState() => _EditAlertDialogState();
@@ -258,7 +380,7 @@ class _EditAlertDialogState extends State<EditAlertDialog> {
                   fontSize: Theme.of(context).textTheme.bodyText1.fontSize,
                 ),
           ),
-          onPressed: () {
+          onPressed: () async {
             String newWord = _textController.text;
             int ok = 0;
             for (int i = 0; i < newWord.length; i++) {
@@ -288,14 +410,24 @@ class _EditAlertDialogState extends State<EditAlertDialog> {
               }
             }
             if (bigVowels == 1 && ok == 2) {
-              _validate = false;
-              if(widget.title=='Править'){
-                widget.editFunction(widget.initialWord,newWord);
-              }else{
-                widget.editFunction(newWord);
+              String str = await readFile();
+              List<String> lst = str.split('\n');
+              if (lst.contains(newWord)) {
+                setState(() {
+                  print('Word has already existed');
+                  _validate = true;
+                });
+              } else {
+                _validate = false;
+                if (widget.title == 'Править') {
+                  await widget.editFunction(widget.initialWord, newWord);
+                } else {
+                  await widget.editFunction(newWord);
+                }
+                print('create/edit');
+                widget.streamController.add(-1);
+                Navigator.pop(context);
               }
-              widget.update();
-              Navigator.pop(context);
             } else {
               setState(() {
                 print('Not valid');

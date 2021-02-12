@@ -22,6 +22,8 @@ class QuizScreen extends StatefulWidget {
 class _QuizScreenState extends State<QuizScreen> {
   StreamController<int> streamController;
   Stream stream;
+  StreamController<bool> activityStreamController;
+  Stream activityStream;
   String word = '', rightAnswer;
   List<String> accentList = [];
   int currentIndex = 0, now = 0;
@@ -30,6 +32,7 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   void dispose() {
     streamController.close();
+    activityStreamController.close();
     super.dispose();
   }
 
@@ -37,7 +40,9 @@ class _QuizScreenState extends State<QuizScreen> {
   void initState() {
     super.initState();
     streamController = StreamController<int>.broadcast();
+    activityStreamController = StreamController<bool>.broadcast();
     stream = streamController.stream;
+    activityStream = activityStreamController.stream;
     all = widget.isRandom ? kInfinity : '0';
   }
 
@@ -123,14 +128,18 @@ class _QuizScreenState extends State<QuizScreen> {
                           rightIndex: accentList.indexOf(rightAnswer),
                           stream: stream,
                           streamController: streamController,
+                          activityStream: activityStream,
+                          activityStreamController: activityStreamController,
                           text: accentList[i],
                           selectedColor: rightAnswer == accentList[i]
                               ? Theme.of(context).primaryColor
                               : Theme.of(context).errorColor,
                           onPressed: () {
+                            streamController.add(-1);
+                            activityStreamController.add(false);
                             Future.delayed(const Duration(seconds: 2), () {
                               setState(() {
-                                streamController.add(-1);
+
                               });
                             });
                           },

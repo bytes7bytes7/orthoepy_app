@@ -34,6 +34,9 @@ Future<File> appendFile(String data) async {
     // Append
     return file.writeAsString(tmp);
   }
+  for(int i =lst.length-1;i>=0;i--){
+    if(lst[i]=='') lst.removeAt(i);
+  }
   lst.add(data);
   List<String> lst2 = List<String>.from(lst);
   List<String> lst3 = List<String>.from(lst);
@@ -78,7 +81,7 @@ Future<String> readFile() async {
     final file = await localFile();
     // Read the file.
     String contents = await file.readAsString();
-    return contents;
+    return contents.trim();
   } catch (e) {
     // If encountering an error, return ''.
     return '';

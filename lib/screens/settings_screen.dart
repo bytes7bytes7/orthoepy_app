@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_accent_app/screens/components/quiz_outlined_button.dart';
 import 'package:flutter_accent_app/screens/dictionary_screen.dart';
@@ -9,9 +11,31 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  Future<int> getData() async {
+  Stream stream;
+  StreamController<int> streamController;
+
+  @override
+  void dispose() {
+    streamController.close();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    streamController = StreamController<int>.broadcast();
+    stream = streamController.stream;
+    getData();
+  }
+
+  getData() async {
     String words = await readFile();
-    return words.split('\n').length;
+    if (words == '') {
+      streamController.add(0);
+    } else {
+      print('words:' +words.split('\n').length.toString());
+      streamController.add(words.split('\n').length);
+    }
   }
 
   @override
@@ -33,8 +57,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       body: Column(
         children: [
-          FutureBuilder<int>(
-            future: getData(),
+          StreamBuilder<int>(
+            stream: stream,
             builder: (context, snapshot) {
               int count = 0;
               if (snapshot.hasData) {
@@ -54,9 +78,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           QuizOutlinedButton(
             text: 'Сбросить настройки',
-            onPressed: (){
+            onPressed: () {
               setState(() {
                 createDictionary();
+                getData();
+              });
+            },
+          ),
+          QuizOutlinedButton(
+            text: 'Очистить словарь',
+            onPressed: () {
+              setState(() {
+                writeFile('');
+                getData();
               });
             },
           ),
@@ -71,7 +105,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (BuildContext context) => DictionaryScreen(),
+            builder: (BuildContext context) => DictionaryScreen(
+                stream: stream, streamController: streamController),
           ),
         );
       },

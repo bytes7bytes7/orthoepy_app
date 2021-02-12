@@ -12,6 +12,8 @@ class QuizOutlinedButton extends StatefulWidget {
     this.selectedColor,
     this.stream,
     this.streamController,
+    this.activityStream,
+    this.activityStreamController,
   }) : super(key: key);
 
   final String text;
@@ -21,12 +23,23 @@ class QuizOutlinedButton extends StatefulWidget {
   final Color selectedColor;
   final Stream stream;
   final StreamController streamController;
+  final Stream activityStream;
+  final StreamController activityStreamController;
 
   @override
   _QuizOutlinedButtonState createState() => _QuizOutlinedButtonState();
 }
 
 class _QuizOutlinedButtonState extends State<QuizOutlinedButton> {
+
+  bool activate(){
+    bool a;
+    widget.activityStream.listen((event) {
+      a=event;
+    });
+    return a;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -40,7 +53,9 @@ class _QuizOutlinedButtonState extends State<QuizOutlinedButton> {
           Color backgroundColor = Theme.of(context).backgroundColor;
           Color fontColor = Theme.of(context).textTheme.button.color;
           if (snapshot.hasData) {
-            if ((widget.index == widget.rightIndex || snapshot.data == widget.index) && snapshot.data != -1) {
+            if ((widget.index == widget.rightIndex ||
+                    snapshot.data == widget.index) &&
+                snapshot.data != -1) {
               //print(widget.index.toString()+' : '+snapshot.data.toString());
               backgroundColor = widget.selectedColor;
               fontColor = Theme.of(context).backgroundColor;
@@ -89,7 +104,7 @@ class _QuizOutlinedButtonState extends State<QuizOutlinedButton> {
                 ),
               ),
               onPressed: () {
-                if (widget.streamController != null) {
+                if (widget.streamController != null && activate()) {
                   widget.streamController.add(widget.index);
                 }
                 widget.onPressed();
