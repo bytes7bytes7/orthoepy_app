@@ -6,8 +6,9 @@ import 'package:flutter_accent_app/services.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  readFile().then((value) {
-    if (value == '') {
+  readFile().then((map) {
+    List<String> keys =map.keys.toList();
+    if(keys.length==0){
       createDictionary();
     }
   });

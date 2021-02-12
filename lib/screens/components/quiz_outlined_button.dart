@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
+import 'package:flutter_accent_app/services.dart';
 
 class QuizOutlinedButton extends StatefulWidget {
   QuizOutlinedButton({
     Key key,
     @required this.text,
     @required this.onPressed,
+    this.isActive,
     this.index,
     this.rightIndex,
     this.selectedColor,
@@ -18,6 +19,7 @@ class QuizOutlinedButton extends StatefulWidget {
 
   final String text;
   final Function onPressed;
+  final bool isActive;
   final int index;
   final int rightIndex;
   final Color selectedColor;
@@ -31,13 +33,22 @@ class QuizOutlinedButton extends StatefulWidget {
 }
 
 class _QuizOutlinedButtonState extends State<QuizOutlinedButton> {
+  bool _isActive;
 
-  bool activate(){
+  bool activate() {
     bool a;
     widget.activityStream.listen((event) {
-      a=event;
+      a = event;
     });
     return a;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isActive != null) {
+      (widget.isActive) ? _isActive = true : _isActive = false;
+    }
   }
 
   @override
@@ -56,7 +67,6 @@ class _QuizOutlinedButtonState extends State<QuizOutlinedButton> {
             if ((widget.index == widget.rightIndex ||
                     snapshot.data == widget.index) &&
                 snapshot.data != -1) {
-              //print(widget.index.toString()+' : '+snapshot.data.toString());
               backgroundColor = widget.selectedColor;
               fontColor = Theme.of(context).backgroundColor;
             }
@@ -83,28 +93,59 @@ class _QuizOutlinedButtonState extends State<QuizOutlinedButton> {
                     ),
                   ),
                 ),
-                // borderSide: BorderSide(
-                //   color: Theme.of(context).buttonColor,
-                // ),
-                // fade when you hold the button
-                // highlightColor: Colors.transparent,
-                // animated circle when you hold the button
-                // splashColor: Theme.of(context).focusColor,
               ),
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 12.0),
                 alignment: Alignment.center,
                 width: double.infinity,
-                child: Text(
-                  widget.text,
-                  style: Theme.of(context)
-                      .textTheme
-                      .button
-                      .copyWith(color: fontColor),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    (widget.isActive != null)
+                        ? Flexible(
+                            flex: 1,
+                            child: Checkbox(
+                              value: _isActive,
+                              onChanged: (value) {
+                                setState(() {
+                                  _isActive = value;
+                                  switchFile(widget.text);
+                                });
+                              },
+                              activeColor: Theme.of(context).focusColor,
+                            ),
+                          )
+                        : SizedBox.shrink(),
+                    Flexible(
+                      flex: 5,
+                      fit: (widget.isActive != null)
+                          ? FlexFit.tight
+                          : FlexFit.loose,
+                      child: Text(
+                        widget.text,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context)
+                            .textTheme
+                            .button
+                            .copyWith(color: fontColor),
+                      ),
+                    ),
+                    (widget.isActive != null) ? Spacer() : SizedBox.shrink(),
+                    (widget.isActive != null)
+                        ? Flexible(
+                            flex: 1,
+                            child: Icon(
+                              Icons.edit,
+                              color: Theme.of(context).focusColor,
+                            ),
+                          )
+                        : SizedBox.shrink(),
+                  ],
                 ),
               ),
               onPressed: () {
-                if (widget.streamController != null && activate()) {
+                if (widget.streamController != null) {
+                  print('add');
                   widget.streamController.add(widget.index);
                 }
                 widget.onPressed();

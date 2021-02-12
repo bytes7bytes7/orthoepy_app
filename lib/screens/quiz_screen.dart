@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_accent_app/const.dart';
-import 'package:flutter_accent_app/screens/components/quiz_outlined_button.dart';
+import 'package:flutter_accent_app/screens/components/quiz_button_panel.dart';
 import 'package:flutter_accent_app/services.dart';
 import 'dart:math';
 import 'dart:async';
@@ -47,33 +47,26 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   Future<String> getNext() async {
-    if (widget.isRandom) {
-      currentIndex = await getRandom();
-    } else {
-      currentIndex++;
-    }
-    return await readFile().then((value) {
-      // print('getNext');
-      List<String> lst = value.split('\n');
-      //print('Len: '+lst.length.toString());
-      if (currentIndex >= lst.length) {
+    Map<String, int> map = await readFile();
+    List<String> keys = map.keys.toList();
+    do {
+      if (widget.isRandom) {
+        currentIndex = getRandom(map.length);
+      } else {
+        currentIndex++;
+      }
+      if (currentIndex >= map.length) {
         currentIndex = 0;
       }
-      now += 1;
-      //print('value: ' + value.split('\n')[currentIndex]);
-      all = widget.isRandom ? kInfinity : lst.length.toString();
-      return lst[currentIndex];
-    }).catchError((error) {
-      print(error.toString());
-      return '';
-    });
+    } while (map[keys[currentIndex]] == 0);
+    now += 1;
+    all = widget.isRandom ? kInfinity : map.length.toString();
+    return keys[currentIndex];
   }
 
-  Future<int> getRandom() async {
+  int getRandom(int length) {
     var rng = new Random();
-    return rng.nextInt(await readFile().then((value) {
-      return value.split('\n').length;
-    }));
+    return rng.nextInt(length);
   }
 
   @override
@@ -115,39 +108,50 @@ class _QuizScreenState extends State<QuizScreen> {
           return Column(
             children: [
               SizedBox(height: 40.0),
-              buildWordContainer(word.toLowerCase(),word, now.toString(), all,
+              buildWordContainer(word.toLowerCase(), word, now.toString(), all,
                   containerSize, iconSize, size, context),
-              Expanded(
-                child: Center(
-                  child: ListView(
-                    shrinkWrap: true,
-                    children: [
-                      for (int i = 0; i < accentList.length; i++)
-                        QuizOutlinedButton(
-                          index: i,
-                          rightIndex: accentList.indexOf(rightAnswer),
-                          stream: stream,
-                          streamController: streamController,
-                          activityStream: activityStream,
-                          activityStreamController: activityStreamController,
-                          text: accentList[i],
-                          selectedColor: rightAnswer == accentList[i]
-                              ? Theme.of(context).primaryColor
-                              : Theme.of(context).errorColor,
-                          onPressed: () {
-                            streamController.add(-1);
-                            activityStreamController.add(false);
-                            Future.delayed(const Duration(seconds: 2), () {
-                              setState(() {
-
-                              });
-                            });
-                          },
-                        )
-                    ],
-                  ),
-                ),
-              )
+              QuizButtonPanel(
+                accentList: accentList,
+                rightIndex: accentList.indexOf(rightAnswer),
+                streamController: streamController,
+                stream: stream,
+                onPressed: () {
+                  streamController.add(-1);
+                  activityStreamController.add(false);
+                  Future.delayed(const Duration(seconds: 2), () {
+                    setState(() {});
+                  });
+                },
+              ),
+              // Expanded(
+              //   child: Center(
+              //     child: ListView(
+              //       shrinkWrap: true,
+              //       children: [
+              //         for (int i = 0; i < accentList.length; i++)
+              //           QuizOutlinedButton(
+              //             index: i,
+              //             rightIndex: accentList.indexOf(rightAnswer),
+              //             stream: stream,
+              //             streamController: streamController,
+              //             activityStream: activityStream,
+              //             activityStreamController: activityStreamController,
+              //             text: accentList[i],
+              //             selectedColor: rightAnswer == accentList[i]
+              //                 ? Theme.of(context).primaryColor
+              //                 : Theme.of(context).errorColor,
+              //             onPressed: () {
+              //               streamController.add(-1);
+              //               activityStreamController.add(false);
+              //               Future.delayed(const Duration(seconds: 2), () {
+              //                 setState(() {});
+              //               });
+              //             },
+              //           )
+              //       ],
+              //     ),
+              //   ),
+              // )
             ],
           );
         },
@@ -155,8 +159,15 @@ class _QuizScreenState extends State<QuizScreen> {
     );
   }
 
-  Stack buildWordContainer(String word, String rightAnswer, String now, String all,
-      double containerSize, double iconSize, Size size, BuildContext context) {
+  Stack buildWordContainer(
+      String word,
+      String rightAnswer,
+      String now,
+      String all,
+      double containerSize,
+      double iconSize,
+      Size size,
+      BuildContext context) {
     // print('Get word: ' + word);
     return Stack(
       clipBehavior: Clip.none,
@@ -238,9 +249,7 @@ class _QuizScreenState extends State<QuizScreen> {
           title: Center(child: Text('Подсказка')),
           content: SingleChildScrollView(
             child: ListBody(
-              children: <Widget>[
-                Center(child: Text(hint))
-              ],
+              children: <Widget>[Center(child: Text(hint))],
             ),
           ),
         );

@@ -10,3 +10,5 @@ const String kInfinity = '∞';
 const String kLetters = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ';
 const String kVowels = 'аяоеуюыиэе';
 const String kNotVowels = 'бвгджзйклмнпрстфхцчшщъь';
+const String kEditTitle = 'Править';
+const String kCreateTitle = 'Создать';

@@ -29,12 +29,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   getData() async {
-    String words = await readFile();
-    if (words == '') {
+    Map<String, int> words = await readFile();
+    List<String> keys = words.keys.toList();
+    if (keys.length == 0) {
+      print('empty keys');
       streamController.add(0);
     } else {
-      print('words:' +words.split('\n').length.toString());
-      streamController.add(words.split('\n').length);
+      streamController.add(keys.length);
     }
   }
 
@@ -89,7 +90,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             text: 'Очистить словарь',
             onPressed: () {
               setState(() {
-                writeFile('');
+                writeFile('',1);
                 getData();
               });
             },
