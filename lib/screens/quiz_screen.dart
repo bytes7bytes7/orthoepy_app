@@ -20,10 +20,6 @@ class QuizScreen extends StatefulWidget {
 }
 
 class _QuizScreenState extends State<QuizScreen> {
-  StreamController<int> streamController;
-  Stream stream;
-  StreamController<bool> activityStreamController;
-  Stream activityStream;
   String word = '', rightAnswer;
   List<String> accentList = [];
   int currentIndex = 0, now = 0;
@@ -31,18 +27,12 @@ class _QuizScreenState extends State<QuizScreen> {
 
   @override
   void dispose() {
-    streamController.close();
-    activityStreamController.close();
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-    streamController = StreamController<int>.broadcast();
-    activityStreamController = StreamController<bool>.broadcast();
-    stream = streamController.stream;
-    activityStream = activityStreamController.stream;
     all = widget.isRandom ? kInfinity : '0';
   }
 
@@ -51,7 +41,8 @@ class _QuizScreenState extends State<QuizScreen> {
     List<String> keys = map.keys.toList();
     do {
       if (widget.isRandom) {
-        currentIndex = getRandom(map.length);
+        var rng = new Random();
+        currentIndex = rng.nextInt(map.length);
       } else {
         currentIndex++;
       }
@@ -62,11 +53,6 @@ class _QuizScreenState extends State<QuizScreen> {
     now += 1;
     all = widget.isRandom ? kInfinity : map.length.toString();
     return keys[currentIndex];
-  }
-
-  int getRandom(int length) {
-    var rng = new Random();
-    return rng.nextInt(length);
   }
 
   @override
@@ -96,12 +82,9 @@ class _QuizScreenState extends State<QuizScreen> {
             accentList = shuffleAccent(word);
             rightAnswer = accentList[0];
             accentList.shuffle();
-            // print('Snapshot: ${snapshot.data}');
-            // print('OK');
           } else if (snapshot.hasError) {
             print(snapshot.error.toString());
             word = '';
-            // print('ERROR');
           } else {
             word = '';
           }
@@ -113,45 +96,12 @@ class _QuizScreenState extends State<QuizScreen> {
               QuizButtonPanel(
                 accentList: accentList,
                 rightIndex: accentList.indexOf(rightAnswer),
-                streamController: streamController,
-                stream: stream,
                 onPressed: () {
-                  streamController.add(-1);
-                  activityStreamController.add(false);
                   Future.delayed(const Duration(seconds: 2), () {
                     setState(() {});
                   });
                 },
               ),
-              // Expanded(
-              //   child: Center(
-              //     child: ListView(
-              //       shrinkWrap: true,
-              //       children: [
-              //         for (int i = 0; i < accentList.length; i++)
-              //           QuizOutlinedButton(
-              //             index: i,
-              //             rightIndex: accentList.indexOf(rightAnswer),
-              //             stream: stream,
-              //             streamController: streamController,
-              //             activityStream: activityStream,
-              //             activityStreamController: activityStreamController,
-              //             text: accentList[i],
-              //             selectedColor: rightAnswer == accentList[i]
-              //                 ? Theme.of(context).primaryColor
-              //                 : Theme.of(context).errorColor,
-              //             onPressed: () {
-              //               streamController.add(-1);
-              //               activityStreamController.add(false);
-              //               Future.delayed(const Duration(seconds: 2), () {
-              //                 setState(() {});
-              //               });
-              //             },
-              //           )
-              //       ],
-              //     ),
-              //   ),
-              // )
             ],
           );
         },
@@ -168,7 +118,6 @@ class _QuizScreenState extends State<QuizScreen> {
       double iconSize,
       Size size,
       BuildContext context) {
-    // print('Get word: ' + word);
     return Stack(
       clipBehavior: Clip.none,
       alignment: Alignment.center,

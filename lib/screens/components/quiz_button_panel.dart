@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 class QuizButtonPanel extends StatefulWidget {
@@ -7,15 +5,11 @@ class QuizButtonPanel extends StatefulWidget {
     Key key,
     @required this.accentList,
     @required this.rightIndex,
-    @required this.streamController,
-    @required this.stream,
     @required this.onPressed,
   }) : super(key: key);
 
   final List<String> accentList;
   final int rightIndex;
-  final StreamController streamController;
-  final Stream stream;
   final Function onPressed;
 
   @override
@@ -95,10 +89,7 @@ class _QuizButtonPanelState extends State<QuizButtonPanel> {
           ),
           onPressed: () {
             if (answers[0] == answers[1]) {
-              if (widget.streamController != null) {
-                print('add');
-                widget.streamController.add(index);
-              }
+              print('add');
               setState(() {
                 if (index == widget.rightIndex)
                   answers = [-1, widget.rightIndex];

@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_accent_app/const.dart';
-import 'package:flutter_accent_app/screens/components/quiz_outlined_button.dart';
+import 'package:flutter_accent_app/screens/components/custom_outlined_button.dart';
 import 'package:flutter_accent_app/services.dart';
 
 class DictionaryScreen extends StatefulWidget {
@@ -152,71 +152,67 @@ class _DictionaryScreenState extends State<DictionaryScreen>
           children: [
             buildSearchPanel(appendFile),
             StreamBuilder<int>(
-                stream: widget.stream,
-                builder: (context, snapshot) {
-                  if (snapshot.hasData && snapshot.data == -1) {
-                    initWords();
-                    started = false;
-                  } else if (snapshot.data == 0) {
-                    map = {};
-                  }
-                  if (loading && started) {
-                    return Expanded(
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                              Theme.of(context).primaryColor),
-                        ),
+              stream: widget.stream,
+              builder: (context, snapshot) {
+                if (snapshot.hasData && snapshot.data == -1) {
+                  initWords();
+                  started = false;
+                } else if (snapshot.data == 0) {
+                  map = {};
+                }
+                if (loading && started) {
+                  return Expanded(
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                            Theme.of(context).primaryColor),
                       ),
-                    );
-                  } else if (map == null || map.length == 0) {
-                    return Expanded(
-                      child: Center(
-                        child: Text(
-                          'Список пуст!',
-                          style: Theme.of(context).textTheme.headline1.copyWith(
-                                color: Theme.of(context).primaryColor,
-                              ),
-                        ),
-                      ),
-                    );
-                  } else {
-                    return Expanded(
-                      child: ListView(
-                        shrinkWrap: true,
-                        controller: listViewController,
-                        physics: AlwaysScrollableScrollPhysics(),
-                        children: [
-                          Column(
-                            children: List.generate(
-                              map.length,
-                              (index) {
-                                List<String> keys = map.keys.toList();
-                                return QuizOutlinedButton(
-                                  index: index,
-                                  text: keys[index],
-                                  isActive: map[keys[index]] == 1,
-                                  onPressed: () {
-                                    _showEditDialog(context, replaceFile,
-                                        kEditTitle, keys[index]);
-                                  },
-                                );
-                              },
+                    ),
+                  );
+                } else if (map == null || map.length == 0) {
+                  return Expanded(
+                    child: Center(
+                      child: Text(
+                        'Список пуст!',
+                        style: Theme.of(context).textTheme.headline1.copyWith(
+                              color: Theme.of(context).primaryColor,
                             ),
-                          ),
-                        ],
                       ),
-                    );
-                  }
-                })
+                    ),
+                  );
+                } else {
+                  return Expanded(
+                    child: ListView(
+                      shrinkWrap: true,
+                      controller: listViewController,
+                      physics: AlwaysScrollableScrollPhysics(),
+                      children: [
+                        Column(
+                          children: List.generate(
+                            map.length,
+                            (index) {
+                              List<String> keys = map.keys.toList();
+                              return CustomOutlinedButton(
+                                text: keys[index],
+                                isActive: map[keys[index]] == 1,
+                                onPressed: () {
+                                  _showEditDialog(context, replaceFile,
+                                      kEditTitle, keys[index]);
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+              },
+            )
           ],
         ),
       ),
     );
-  }
-
-  void search() async {
-    widget.streamController.add(-1);
   }
 
   Widget buildSearchPanel(Function editFunction) {
@@ -243,7 +239,7 @@ class _DictionaryScreenState extends State<DictionaryScreen>
               onChanged: (value) {
                 setState(() {
                   searchWord = textEditingController.text;
-                  search();
+                  widget.streamController.add(-1);
                 });
               },
               cursorColor: Theme.of(context).focusColor,

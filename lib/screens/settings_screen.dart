@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_accent_app/screens/components/quiz_outlined_button.dart';
+import 'package:flutter_accent_app/screens/components/custom_outlined_button.dart';
 import 'package:flutter_accent_app/screens/dictionary_screen.dart';
 import 'package:flutter_accent_app/services.dart';
 
@@ -77,7 +77,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               );
             },
           ),
-          QuizOutlinedButton(
+          CustomOutlinedButton(
             text: 'Сбросить настройки',
             onPressed: () {
               setState(() {
@@ -86,7 +86,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               });
             },
           ),
-          QuizOutlinedButton(
+          CustomOutlinedButton(
             text: 'Очистить словарь',
             onPressed: () {
               setState(() {
