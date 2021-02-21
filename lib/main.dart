@@ -24,7 +24,6 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-
   @override
   Widget build(BuildContext context) {
     SystemChrome.setPreferredOrientations([
@@ -50,7 +49,10 @@ class MyApp extends StatelessWidget {
             fontSize: 20.0,
           ),
           subtitle1: TextStyle(
-              color: kButtonColor, fontSize: 16.0, fontWeight: FontWeight.bold),
+            color: kPrimaryColor,
+            fontSize: 16.0,
+            fontWeight: FontWeight.bold,
+          ),
           button: TextStyle(
             color: kPrimaryColor,
             fontSize: 18.0,

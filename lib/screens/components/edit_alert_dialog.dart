@@ -138,7 +138,6 @@ class _EditAlertDialogState extends State<EditAlertDialog> {
               }
             }
             if (bigVowels == 1 && ok == 2) {
-              // TODO: check stream
               List<String> keys = _words.keys.toList();
               if (keys.contains(newWord)) {
                 setState(() {

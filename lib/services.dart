@@ -65,6 +65,11 @@ Future<File> writeFile(String key, int value) async {
   return file.writeAsString('\n' + key + '\n' + value.toString());
 }
 
+Future<File> writeStringFile(String dict) async {
+  final file = await localFile();
+  return file.writeAsString(dict);
+}
+
 Future<File> appendFile(String key, int value) async {
   Map<String, int> map = await readFile();
   if (map.containsKey(key)) {
@@ -117,8 +122,7 @@ Future<String> sortWords(Map<String, int> map) async {
   for (int i = 1; i < lst3.length; i++) {
     dict += '\n' + lst3[i] + '\n' + map[lst3[i]].toString();
   }
-  final file = await localFile();
-  file.writeAsString(dict);
+  writeStringFile(dict);
   return dict;
 }
 

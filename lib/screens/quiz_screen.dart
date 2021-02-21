@@ -48,6 +48,9 @@ class _QuizScreenState extends State<QuizScreen> {
   Future<String> getNext() async {
     int tmp;
     List<String> keys = _words.keys.toList();
+    if (delta == _words.length) {
+      return '';
+    }
     do {
       if (widget.isRandom) {
         var rng = Random();
@@ -87,9 +90,7 @@ class _QuizScreenState extends State<QuizScreen> {
     super.initState();
     _words = widget.words;
     all = widget.isRandom ? kInfinity : '0';
-    if (!widget.isRandom) {
-      initDelta();
-    }
+    initDelta();
   }
 
   @override
@@ -114,11 +115,14 @@ class _QuizScreenState extends State<QuizScreen> {
       body: FutureBuilder<String>(
         future: getNext(),
         builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
-          if (snapshot.hasData) {
+          if (snapshot.hasData && snapshot.data!='') {
             word = snapshot.data;
             accentList = shuffleAccent(word);
             rightAnswer = accentList[0];
             accentList.shuffle();
+          }else if(snapshot.hasData){
+            word=rightAnswer='';
+            accentList=[];
           } else if (snapshot.hasError) {
             print(snapshot.error.toString());
             word = '';
@@ -222,7 +226,7 @@ class _QuizScreenState extends State<QuizScreen> {
               ),
               child: Icon(
                 Icons.help_outline_outlined,
-                color: Theme.of(context).buttonColor,
+                color: Theme.of(context).primaryColor,
                 size: iconSize - 2.0,
               ),
             ),
@@ -241,7 +245,11 @@ class _QuizScreenState extends State<QuizScreen> {
           title: Center(child: Text('Подсказка')),
           content: SingleChildScrollView(
             child: ListBody(
-              children: <Widget>[Center(child: Text(hint))],
+              children: <Widget>[
+                Center(
+                  child: Text(hint, style: Theme.of(context).textTheme.button),
+                )
+              ],
             ),
           ),
         );

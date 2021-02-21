@@ -22,7 +22,6 @@ class DictionaryScreen extends StatefulWidget {
 
 class _DictionaryScreenState extends State<DictionaryScreen>
     with TickerProviderStateMixin {
-  //TODO: add "Select All" button
 
   Stream scrollStream;
   StreamController<double> scrollStreamController;
@@ -31,6 +30,9 @@ class _DictionaryScreenState extends State<DictionaryScreen>
   String searchWord;
   Map<String, int> _words;
   Map<String, int> searchMap;
+  Set<String> selectedWords;
+  bool selectAll;
+  bool checkAll;
   bool loading;
   bool started;
   List<String> wordsKeys;
@@ -55,8 +57,10 @@ class _DictionaryScreenState extends State<DictionaryScreen>
   void initState() {
     super.initState();
     started = true;
+    checkAll = false;
     searchWord = '';
     searchMap = {};
+    selectedWords = {};
     _words = widget.words;
     wordsKeys = _words.keys.toList();
     textEditingController = TextEditingController();
@@ -90,16 +94,115 @@ class _DictionaryScreenState extends State<DictionaryScreen>
       child: Scaffold(
         appBar: AppBar(
           centerTitle: true,
-          title: Text(
-            'Словарь',
-            style: Theme.of(context).textTheme.headline1,
-          ),
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_rounded),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
+          title: selectedWords.isEmpty
+              ? Text(
+                  'Словарь',
+                  style: Theme.of(context).textTheme.headline1,
+                )
+              : SizedBox.shrink(),
+          leading: selectAll != null
+              ? IconButton(
+                  icon: Icon(Icons.close),
+                  onPressed: () async {
+                    setState(() {
+                      selectAll = null;
+                      selectedWords.clear();
+                      widget.streamController.add(-1);
+                    });
+                  },
+                )
+              : IconButton(
+                  icon: Icon(Icons.arrow_back_ios_rounded),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+          actions: [
+            selectAll != null
+                ? Row(
+                    children: [
+                      Text(
+                        'Все:',
+                        style: Theme.of(context)
+                            .textTheme
+                            .headline1
+                            .copyWith(fontSize: 18.0),
+                      ),
+                      Theme(
+                        data: Theme.of(context).copyWith(
+                            unselectedWidgetColor:
+                                Theme.of(context).backgroundColor),
+                        child: Checkbox(
+                          value: selectAll,
+                          onChanged: (value) {
+                            setState(() {
+                              selectAll = value;
+                              if (value) {
+                                if (searchMap.isNotEmpty) {
+                                  selectedWords.addAll(searchMap.keys);
+                                } else {
+                                  selectedWords.addAll(_words.keys);
+                                }
+                              } else {
+                                String first = selectedWords.first;
+                                selectedWords.clear();
+                                selectedWords.add(first);
+                              }
+                            });
+                          },
+                          activeColor: Theme.of(context).focusColor,
+                        ),
+                      ),
+                      Text(
+                        'Актив:',
+                        style: Theme.of(context)
+                            .textTheme
+                            .headline1
+                            .copyWith(fontSize: 18.0),
+                      ),
+                      Theme(
+                        data: Theme.of(context).copyWith(
+                            unselectedWidgetColor:
+                                Theme.of(context).backgroundColor),
+                        child: Checkbox(
+                          value: checkAll,
+                          onChanged: (value) async {
+                            setState(() {
+                              checkAll = value;
+                              List<String> lst = selectedWords.toList();
+                              lst.forEach((e) {
+                                if ((_words[e] != 1) == value) {
+                                  _words[e] = value ? 1 : 0;
+                                }
+                              });
+                              setState(() {});
+                              writeStringFile(wordsToString(_words));
+                            });
+                          },
+                          activeColor: Theme.of(context).focusColor,
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.delete_outline),
+                        onPressed: () async {
+                          _words.removeWhere(
+                              (key, value) => selectedWords.contains(key));
+                          if (searchMap.isNotEmpty) {
+                            searchMap.removeWhere(
+                                (key, value) => selectedWords.contains(key));
+                          }
+                          setState(() {
+                            selectAll = null;
+                            selectedWords.clear();
+                            widget.streamController.add(-1);
+                          });
+                          writeStringFile(wordsToString(_words));
+                        },
+                      ),
+                    ],
+                  )
+                : SizedBox.shrink(),
+          ],
         ),
         floatingActionButton: StreamBuilder(
             stream: scrollStream,
@@ -141,7 +244,10 @@ class _DictionaryScreenState extends State<DictionaryScreen>
                     }
                     wordsKeys = searchMap.keys.toList();
                   } else {
-                    wordsKeys = _words.keys.toList();
+                    if (_words.isNotEmpty)
+                      wordsKeys = _words.keys.toList();
+                    else
+                      wordsKeys.clear();
                   }
                 } else if (snapshot.data == 0) {
                   print('data = 0');
@@ -185,7 +291,13 @@ class _DictionaryScreenState extends State<DictionaryScreen>
                               ? List.generate(
                                   _words.length,
                                   (index) {
-                                    print('full');
+                                    bool isSelected = false;
+                                    if (selectedWords.length > 0) {
+                                      if (selectedWords
+                                          .contains(wordsKeys[index])) {
+                                        isSelected = true;
+                                      }
+                                    }
                                     return buildButton(
                                       wordsKeys[index],
                                       _words[wordsKeys[index]] == 1,
@@ -193,14 +305,20 @@ class _DictionaryScreenState extends State<DictionaryScreen>
                                         _showEditDialog(context, replaceFile,
                                             kEditTitle, wordsKeys[index]);
                                       },
+                                      isSelected,
                                     );
                                   },
                                 )
                               : List.generate(
                                   searchMap.length,
                                   (index) {
-                                    print('searchMap.length = ' +
-                                        searchMap.length.toString());
+                                    bool isSelected = false;
+                                    if (selectedWords.length > 0) {
+                                      if (selectedWords
+                                          .contains(wordsKeys[index])) {
+                                        isSelected = true;
+                                      }
+                                    }
                                     return buildButton(
                                       wordsKeys[index],
                                       searchMap[wordsKeys[index]] == 1,
@@ -208,6 +326,7 @@ class _DictionaryScreenState extends State<DictionaryScreen>
                                         _showEditDialog(context, replaceFile,
                                             kEditTitle, wordsKeys[index]);
                                       },
+                                      isSelected,
                                     );
                                   },
                                 ),
@@ -285,35 +404,57 @@ class _DictionaryScreenState extends State<DictionaryScreen>
     );
   }
 
-  Widget buildButton(String text, bool isActive, Function onPressed) {
+  Widget buildButton(
+      String text, bool isActive, Function onPressed, bool isSelected) {
     return Container(
       margin: const EdgeInsets.symmetric(
         vertical: 10.0,
         horizontal: 45.0,
       ),
-      child: DecoratedBox(
-        decoration: ShapeDecoration(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(5.0),
-          ),
-          color: Theme.of(context).backgroundColor,
-        ),
-        child: OutlinedButton(
-          style: ButtonStyle(
-            overlayColor: MaterialStateProperty.resolveWith(
-                (states) => Theme.of(context).focusColor),
-            backgroundColor: MaterialStateProperty.resolveWith(
-                (states) => Colors.transparent),
-            shape: MaterialStateProperty.resolveWith(
-              (states) => RoundedRectangleBorder(
+      child: Material(
+        color: isSelected || selectedWords.contains(text)
+            ? Theme.of(context).focusColor
+            : Theme.of(context).backgroundColor,
+        child: InkWell(
+          onTap: () {
+            if (selectedWords.length == 1 && selectedWords.contains(text)) {
+              setState(() {
+                selectAll = null;
+                selectedWords.clear();
+              });
+            } else if (selectedWords.length > 0 &&
+                !selectedWords.contains(text)) {
+              setState(() {
+                selectedWords.add(text);
+              });
+            } else if (selectedWords.length > 0 &&
+                selectedWords.contains(text)) {
+              setState(() {
+                selectedWords.remove(text);
+              });
+            } else {
+              onPressed();
+            }
+          },
+          onLongPress: () {
+            setState(() {
+              selectAll = false;
+              selectedWords.add(text);
+            });
+          },
+          focusColor: Colors.transparent,
+          splashColor: Theme.of(context).focusColor,
+          highlightColor: Colors.transparent,
+          child: Container(
+            decoration: ShapeDecoration(
+              shape: BeveledRectangleBorder(
                 side: BorderSide(
                   color: Theme.of(context).buttonColor,
+                  width: 0.5,
                 ),
               ),
             ),
-          ),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 12.0),
+            padding: const EdgeInsets.symmetric(vertical: 6.0),
             alignment: Alignment.center,
             width: double.infinity,
             child: Row(
@@ -321,14 +462,24 @@ class _DictionaryScreenState extends State<DictionaryScreen>
               children: [
                 Flexible(
                   flex: 1,
-                  child: Checkbox(
-                    value: isActive,
-                    onChanged: (value) async {
-                      _words[text] = value ? 1 : 0;
-                      switchFile(text, value ? 1 : 0);
-                      widget.streamController.add(-1);
-                    },
-                    activeColor: Theme.of(context).focusColor,
+                  child: Theme(
+                    data: Theme.of(context).copyWith(
+                      unselectedWidgetColor:
+                          isSelected || selectedWords.contains(text)
+                              ? Theme.of(context).backgroundColor
+                              : Theme.of(context).buttonColor,
+                    ),
+                    child: Checkbox(
+                      value: isActive,
+                      onChanged: (value) async {
+                        _words[text] = value ? 1 : 0;
+                        switchFile(text, value ? 1 : 0);
+                        widget.streamController.add(-1);
+                      },
+                      activeColor: isSelected || selectedWords.contains(text)
+                          ? Theme.of(context).primaryColor
+                          : Theme.of(context).focusColor,
+                    ),
                   ),
                 ),
                 Flexible(
@@ -337,7 +488,10 @@ class _DictionaryScreenState extends State<DictionaryScreen>
                   child: Text(
                     text,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.button,
+                    style: Theme.of(context)
+                        .textTheme
+                        .button
+                        .copyWith(color: Theme.of(context).primaryColor),
                   ),
                 ),
                 Spacer(),
@@ -345,15 +499,15 @@ class _DictionaryScreenState extends State<DictionaryScreen>
                   flex: 1,
                   child: Icon(
                     Icons.edit,
-                    color: Theme.of(context).focusColor,
+                    color: isSelected || selectedWords.contains(text)
+                        ? Theme.of(context).primaryColor
+                        : Theme.of(context).focusColor,
                   ),
                 ),
+                SizedBox(width: 5.0),
               ],
             ),
           ),
-          onPressed: () {
-            onPressed();
-          },
         ),
       ),
     );

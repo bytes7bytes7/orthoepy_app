@@ -34,29 +34,24 @@ class _CustomOutlinedButtonState extends State<CustomOutlinedButton> {
         vertical: 10.0,
         horizontal: 45.0,
       ),
-      child: DecoratedBox(
-        decoration: ShapeDecoration(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(5.0),
-          ),
-          color: Theme.of(context).backgroundColor,
-        ),
-        child: OutlinedButton(
-          style: ButtonStyle(
-            overlayColor: MaterialStateProperty.resolveWith(
-                (states) => Theme.of(context).focusColor),
-            backgroundColor: MaterialStateProperty.resolveWith(
-                (states) => Colors.transparent),
-            shape: MaterialStateProperty.resolveWith(
-              (states) => RoundedRectangleBorder(
+      child: Material(
+        child: InkWell(
+          onTap: () {
+            widget.onPressed();
+          },
+          focusColor: Colors.transparent,
+          splashColor: Theme.of(context).focusColor,
+          highlightColor: Colors.transparent,
+          child: Container(
+            decoration: ShapeDecoration(
+              shape: BeveledRectangleBorder(
                 side: BorderSide(
                   color: Theme.of(context).buttonColor,
+                  width: 0.5,
                 ),
               ),
             ),
-          ),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 12.0),
+            padding: const EdgeInsets.symmetric(vertical: 10.0),
             alignment: Alignment.center,
             width: double.infinity,
             child: Text(
@@ -65,10 +60,6 @@ class _CustomOutlinedButtonState extends State<CustomOutlinedButton> {
               style: Theme.of(context).textTheme.button,
             ),
           ),
-          onPressed: () {
-            print('on pressed');
-            widget.onPressed();
-          },
         ),
       ),
     );
