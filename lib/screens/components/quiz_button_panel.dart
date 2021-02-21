@@ -99,7 +99,6 @@ class _QuizButtonPanelState extends State<QuizButtonPanel> {
           ),
           onPressed: () {
             if (answers[0] == answers[1]) {
-              print('add');
               setState(() {
                 if (index == widget.rightIndex)
                   answers = [-1, widget.rightIndex];

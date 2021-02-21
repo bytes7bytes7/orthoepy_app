@@ -5,13 +5,23 @@ import 'package:flutter_accent_app/screens/dictionary_screen.dart';
 import 'package:flutter_accent_app/services.dart';
 
 class SettingsScreen extends StatefulWidget {
+  const SettingsScreen({
+    Key key,
+    @required this.words,
+  }) : super(key: key);
+
+  final Map<String, int> words;
+
   @override
   _SettingsScreenState createState() => _SettingsScreenState();
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  // TODO: add CheckBox to manually move to next word or to move by timer
+  //TODO: add CheckBox to manually move to next word or to move by timer
+  //TODO: add SnackBar
+  //TODO: add dark theme
 
+  Map<String, int> _words;
   Stream stream;
   StreamController<int> streamController;
 
@@ -26,12 +36,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
     streamController = StreamController<int>.broadcast();
     stream = streamController.stream;
-    getData();
+    _words=widget.words;
   }
 
   getData() async {
-    Map<String, int> words = await readFile();
-    List<String> keys = words.keys.toList();
+     //_words = await readFile();
+    List<String> keys = _words.keys.toList();
     if (keys.length == 0) {
       print('empty keys');
       streamController.add(0);
@@ -62,9 +72,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           StreamBuilder<int>(
             stream: stream,
             builder: (context, snapshot) {
-              int count = 0;
+              int count = _words.length;
               if (snapshot.hasData) {
-                count = snapshot.data;
+                //
               } else if (snapshot.hasError) {
                 print(snapshot.error.toString());
               }
@@ -73,26 +83,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   SizedBox(height: 30.0),
                   buildSettingsContainer(
-                      context, 'Всего слов: ' + count.toString()),
+                    context,
+                    'Всего слов: ' + count.toString(),
+                  ),
                 ],
               );
             },
           ),
           CustomOutlinedButton(
             text: 'Сбросить настройки',
-            onPressed: () {
+            onPressed: () async {
+              await createDictionary();
               setState(() {
-                createDictionary();
                 getData();
               });
             },
           ),
           CustomOutlinedButton(
             text: 'Очистить словарь',
-            onPressed: () {
+            onPressed: () async {
+              writeFile('', 1);
               setState(() {
-                writeFile('', 1);
-                getData();
+                _words.clear();
               });
             },
           ),
@@ -108,7 +120,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           context,
           MaterialPageRoute(
             builder: (BuildContext context) => DictionaryScreen(
-                stream: stream, streamController: streamController),
+              words: _words ,
+              stream: stream,
+              streamController: streamController,
+            ),
           ),
         );
       },

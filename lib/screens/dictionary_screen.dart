@@ -1,17 +1,18 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_accent_app/const.dart';
-import 'package:flutter_accent_app/screens/components/custom_outlined_button.dart';
 import 'package:flutter_accent_app/services.dart';
+import 'package:flutter_accent_app/screens/components/edit_alert_dialog.dart';
 
 class DictionaryScreen extends StatefulWidget {
   const DictionaryScreen({
     Key key,
+    @required this.words,
     @required this.stream,
     @required this.streamController,
   }) : super(key: key);
 
+  final Map<String, int> words;
   final Stream stream;
   final StreamController streamController;
 
@@ -21,50 +22,25 @@ class DictionaryScreen extends StatefulWidget {
 
 class _DictionaryScreenState extends State<DictionaryScreen>
     with TickerProviderStateMixin {
-  AnimationController animationController;
-  Animation animation;
+  //TODO: add "Select All" button
+
   Stream scrollStream;
   StreamController<double> scrollStreamController;
   ScrollController listViewController;
   TextEditingController textEditingController;
-  String searchWord = '';
-  Map<String, int> map;
+  String searchWord;
+  Map<String, int> _words;
+  Map<String, int> searchMap;
   bool loading;
   bool started;
-  List<String> mapKeys;
+  List<String> wordsKeys;
 
-  getWords() async {
+  initWords() async {
     loading = true;
-    Map<dynamic, dynamic> m = await readFile().then((map) {
-      List<String> result = map.keys.toList();
-      Map<String, int> part = {};
-      result.forEach((element) {
-        if (element.toLowerCase().contains(searchWord.toLowerCase()))
-          part.putIfAbsent(element, () => map[element]);
-      });
-      if (part.keys.length == 0) {
-        print('empty');
-        return Future.delayed(const Duration(milliseconds: 500), () {
-          widget.streamController.add(0);
-          return {};
-        });
-      }
-      return Future.delayed(const Duration(milliseconds: 500), () {
-        widget.streamController.add(part.length);
-        return part;
-      });
-    }).catchError((error) {
-      print(error.toString());
-      return Future.delayed(const Duration(milliseconds: 500), () {
-        print('READ ERROR');
-        widget.streamController.add(-1);
-        return {};
-      });
+    Future.delayed(const Duration(milliseconds: 500), () {
+      loading = false;
+      widget.streamController.add(_words.length);
     });
-    (m.length == 0) ? map = {} : map = m;
-    mapKeys = map.keys.toList();
-    print('init finished');
-    loading = false;
   }
 
   @override
@@ -72,7 +48,6 @@ class _DictionaryScreenState extends State<DictionaryScreen>
     textEditingController.dispose();
     listViewController.dispose();
     scrollStreamController.close();
-    animationController.dispose();
     super.dispose();
   }
 
@@ -80,22 +55,20 @@ class _DictionaryScreenState extends State<DictionaryScreen>
   void initState() {
     super.initState();
     started = true;
+    searchWord = '';
+    searchMap = {};
+    _words = widget.words;
+    wordsKeys = _words.keys.toList();
     textEditingController = TextEditingController();
     listViewController = ScrollController();
     scrollStreamController = StreamController<double>();
     scrollStream = scrollStreamController.stream;
-    scrollStreamController.add(0.0);
-    animationController = AnimationController(
-        duration: Duration(milliseconds: 1000), vsync: this);
-    animation = Tween(begin: 0.0, end: 1.0).animate(animationController)
-      ..addListener(() {
-        setState(() {});
-      });
-    getWords();
+    scrollStreamController.add(1);
+    initWords();
   }
 
   bool check() {
-    if (map != null && map.length > 10) {
+    if (_words != null && _words.length > 10) {
       if (listViewController.hasClients) {
         if (listViewController.position.pixels > 200) {
           return true;
@@ -155,10 +128,27 @@ class _DictionaryScreenState extends State<DictionaryScreen>
               stream: widget.stream,
               builder: (context, snapshot) {
                 if (snapshot.hasData && snapshot.data == -1) {
-                  getWords();
                   started = false;
+                  searchMap.clear();
+                  if (searchWord.length > 0) {
+                    wordsKeys = _words.keys.toList();
+                    for (int i = 0; i < wordsKeys.length; i++) {
+                      if (wordsKeys[i]
+                          .toLowerCase()
+                          .contains(searchWord.toLowerCase())) {
+                        searchMap[wordsKeys[i]] = _words[wordsKeys[i]];
+                      }
+                    }
+                    wordsKeys = searchMap.keys.toList();
+                  } else {
+                    wordsKeys = _words.keys.toList();
+                  }
                 } else if (snapshot.data == 0) {
-                  map = {};
+                  print('data = 0');
+                  _words.clear();
+                  wordsKeys.clear();
+                } else if (snapshot.hasError) {
+                  print(snapshot.error);
                 }
                 if (loading && started) {
                   return Expanded(
@@ -169,7 +159,10 @@ class _DictionaryScreenState extends State<DictionaryScreen>
                       ),
                     ),
                   );
-                } else if (map == null || map.length == 0) {
+                } else if (_words.isEmpty ||
+                    (_words.isNotEmpty &&
+                        searchMap.isEmpty &&
+                        searchWord.length > 0)) {
                   return Expanded(
                     child: Center(
                       child: Text(
@@ -188,20 +181,36 @@ class _DictionaryScreenState extends State<DictionaryScreen>
                       physics: AlwaysScrollableScrollPhysics(),
                       children: [
                         Column(
-                          children: List.generate(
-                            map.length,
-                            (index) {
-                              print('generate');
-                              return CustomOutlinedButton(
-                                text: mapKeys[index],
-                                isActive: map[mapKeys[index]] == 1,
-                                onPressed: () {
-                                  _showEditDialog(context, replaceFile,
-                                      kEditTitle, mapKeys[index]);
-                                },
-                              );
-                            },
-                          ),
+                          children: searchMap.isEmpty
+                              ? List.generate(
+                                  _words.length,
+                                  (index) {
+                                    print('full');
+                                    return buildButton(
+                                      wordsKeys[index],
+                                      _words[wordsKeys[index]] == 1,
+                                      () {
+                                        _showEditDialog(context, replaceFile,
+                                            kEditTitle, wordsKeys[index]);
+                                      },
+                                    );
+                                  },
+                                )
+                              : List.generate(
+                                  searchMap.length,
+                                  (index) {
+                                    print('searchMap.length = ' +
+                                        searchMap.length.toString());
+                                    return buildButton(
+                                      wordsKeys[index],
+                                      searchMap[wordsKeys[index]] == 1,
+                                      () {
+                                        _showEditDialog(context, replaceFile,
+                                            kEditTitle, wordsKeys[index]);
+                                      },
+                                    );
+                                  },
+                                ),
                         ),
                       ],
                     ),
@@ -276,6 +285,80 @@ class _DictionaryScreenState extends State<DictionaryScreen>
     );
   }
 
+  Widget buildButton(String text, bool isActive, Function onPressed) {
+    return Container(
+      margin: const EdgeInsets.symmetric(
+        vertical: 10.0,
+        horizontal: 45.0,
+      ),
+      child: DecoratedBox(
+        decoration: ShapeDecoration(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(5.0),
+          ),
+          color: Theme.of(context).backgroundColor,
+        ),
+        child: OutlinedButton(
+          style: ButtonStyle(
+            overlayColor: MaterialStateProperty.resolveWith(
+                (states) => Theme.of(context).focusColor),
+            backgroundColor: MaterialStateProperty.resolveWith(
+                (states) => Colors.transparent),
+            shape: MaterialStateProperty.resolveWith(
+              (states) => RoundedRectangleBorder(
+                side: BorderSide(
+                  color: Theme.of(context).buttonColor,
+                ),
+              ),
+            ),
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12.0),
+            alignment: Alignment.center,
+            width: double.infinity,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Flexible(
+                  flex: 1,
+                  child: Checkbox(
+                    value: isActive,
+                    onChanged: (value) async {
+                      _words[text] = value ? 1 : 0;
+                      switchFile(text, value ? 1 : 0);
+                      widget.streamController.add(-1);
+                    },
+                    activeColor: Theme.of(context).focusColor,
+                  ),
+                ),
+                Flexible(
+                  flex: 5,
+                  fit: FlexFit.tight,
+                  child: Text(
+                    text,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.button,
+                  ),
+                ),
+                Spacer(),
+                Flexible(
+                  flex: 1,
+                  child: Icon(
+                    Icons.edit,
+                    color: Theme.of(context).focusColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          onPressed: () {
+            onPressed();
+          },
+        ),
+      ),
+    );
+  }
+
   Future<void> _showEditDialog(BuildContext context, Function editFunction,
       String title, String initialWord) async {
     return showDialog<void>(
@@ -283,174 +366,13 @@ class _DictionaryScreenState extends State<DictionaryScreen>
       barrierDismissible: true,
       builder: (BuildContext context) {
         return EditAlertDialog(
+          words: _words,
           title: title,
           initialWord: initialWord,
           editFunction: editFunction,
           streamController: widget.streamController,
         );
       },
-    );
-  }
-}
-
-class EditAlertDialog extends StatefulWidget {
-  const EditAlertDialog({
-    Key key,
-    @required this.title,
-    @required this.initialWord,
-    @required this.editFunction,
-    @required this.streamController,
-  }) : super(key: key);
-
-  final String title;
-  final String initialWord;
-  final Function editFunction;
-  final StreamController streamController;
-
-  @override
-  _EditAlertDialogState createState() => _EditAlertDialogState();
-}
-
-class _EditAlertDialogState extends State<EditAlertDialog> {
-  TextEditingController _textController;
-  bool _validate = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _textController = TextEditingController(text: widget.initialWord);
-  }
-
-  @override
-  void dispose() {
-    _textController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Center(
-        child: Text(
-          widget.title,
-          style: Theme.of(context).textTheme.headline1.copyWith(
-                color: Theme.of(context).primaryColor,
-                fontSize: Theme.of(context).textTheme.bodyText1.fontSize,
-              ),
-        ),
-      ),
-      content: SingleChildScrollView(
-        child: Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor,
-            borderRadius: BorderRadius.circular(10.0),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 10.0),
-          child: TextField(
-            cursorColor: Theme.of(context).focusColor,
-            cursorWidth: 3.0,
-            controller: _textController,
-            style: Theme.of(context).textTheme.headline1.copyWith(
-                  fontSize: Theme.of(context).textTheme.bodyText1.fontSize,
-                ),
-            decoration: InputDecoration(
-              suffixIcon: Icon(
-                _validate ? Icons.error_outline_outlined : null,
-                color: Theme.of(context).backgroundColor,
-              ),
-              border: InputBorder.none,
-              hintText: 'Новое слово',
-              hintStyle: Theme.of(context).textTheme.headline1.copyWith(
-                    fontSize: Theme.of(context).textTheme.bodyText1.fontSize,
-                  ),
-            ),
-          ),
-        ),
-      ),
-      actions: [
-        if (widget.title == kEditTitle)
-          RaisedButton(
-            color: Theme.of(context).primaryColor,
-            child: Text(
-              'Удалить',
-              style: Theme.of(context).textTheme.headline1.copyWith(
-                    fontSize: Theme.of(context).textTheme.bodyText1.fontSize,
-                  ),
-            ),
-            onPressed: () async {
-              await widget.editFunction(widget.initialWord, '');
-              _validate = false;
-              print('delete');
-              widget.streamController.add(-1);
-              Navigator.pop(context);
-            },
-          ),
-        RaisedButton(
-          color: Theme.of(context).primaryColor,
-          child: Text(
-            'Ок',
-            style: Theme.of(context).textTheme.headline1.copyWith(
-                  fontSize: Theme.of(context).textTheme.bodyText1.fontSize,
-                ),
-          ),
-          onPressed: () async {
-            String newWord = _textController.text;
-            int ok = 0;
-            for (int i = 0; i < newWord.length; i++) {
-              if (kLetters.contains(newWord[i])) {
-                ok = 1;
-                break;
-              }
-            }
-            if (ok == 1) {
-              for (int i = 0; i < newWord.length; i++) {
-                if (kNotVowels.toUpperCase().contains(newWord[i])) {
-                  ok = 1;
-                  break;
-                } else {
-                  ok = 2;
-                }
-              }
-            }
-            int bigVowels = 0;
-            for (int i = 0; i < newWord.length; i++) {
-              if (kVowels.toUpperCase().contains(newWord[i])) {
-                bigVowels++;
-                if (bigVowels > 1) {
-                  bigVowels = 0;
-                  break;
-                }
-              }
-            }
-            if (bigVowels == 1 && ok == 2) {
-              Map<String, int> map = await readFile();
-              List<String> keys = map.keys.toList();
-              if (keys.contains(newWord)) {
-                setState(() {
-                  print('Word has already existed');
-                  _validate = true;
-                });
-              } else {
-                _validate = false;
-                if (widget.title == kEditTitle) {
-                  await widget.editFunction(widget.initialWord, newWord);
-                } else {
-                  await widget.editFunction(newWord, 1);
-                }
-                print(newWord);
-                print('create/edit');
-                widget.streamController.add(-1);
-                Navigator.pop(context);
-              }
-            } else {
-              setState(() {
-                print('Not valid');
-                _validate = true;
-              });
-            }
-          },
-        ),
-      ],
     );
   }
 }

@@ -4,18 +4,27 @@ import 'package:flutter_accent_app/screens/home_screen.dart';
 import 'package:flutter_accent_app/const.dart';
 import 'package:flutter_accent_app/services.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  readFile().then((map) {
-    List<String> keys =map.keys.toList();
-    if(keys.length==0){
-      createDictionary();
-    }
-  });
+  try {
+    words = await readFile().then((map) {
+      List<String> keys = map.keys.toList();
+      if (keys.length == 0) {
+        print('Empty Dictionary');
+        createDictionary();
+      } else {
+        refreshWords();
+      }
+      return map;
+    });
+  } catch (e) {
+    createDictionary();
+  }
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
+
   @override
   Widget build(BuildContext context) {
     SystemChrome.setPreferredOrientations([
@@ -49,7 +58,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: HomeScreen(),
+      home: HomeScreen(words: words),
     );
   }
 }

@@ -4,6 +4,12 @@ import 'quiz_screen.dart';
 import 'components/custom_outlined_button.dart';
 
 class HomeScreen extends StatelessWidget {
+  const HomeScreen({
+    Key key,
+    @required this.words,
+  }) : super(key: key);
+
+  final Map<String, int> words;
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +35,7 @@ class HomeScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (BuildContext context) => QuizScreen(
+                      words: words,
                       screenTitle: firstButtonTitle,
                       isRandom: true,
                     ),
@@ -44,6 +51,7 @@ class HomeScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (BuildContext context) => QuizScreen(
+                      words: words,
                       screenTitle: secondButtonTitle,
                       isRandom: false,
                     ),
@@ -62,7 +70,7 @@ class HomeScreen extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (BuildContext context) => SettingsScreen(),
+              builder: (BuildContext context) => SettingsScreen(words: words),
             ),
           );
         },

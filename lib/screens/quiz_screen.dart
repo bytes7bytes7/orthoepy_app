@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_accent_app/const.dart';
 import 'package:flutter_accent_app/screens/components/quiz_button_panel.dart';
-import 'package:flutter_accent_app/services.dart';
 import 'dart:math';
 import 'dart:async';
 
 class QuizScreen extends StatefulWidget {
   QuizScreen({
     Key key,
+    @required this.words,
     @required this.screenTitle,
     @required this.isRandom,
   }) : super(key: key);
 
+  final Map<String, int> words;
   final String screenTitle;
   final bool isRandom;
 
@@ -20,22 +21,38 @@ class QuizScreen extends StatefulWidget {
 }
 
 class _QuizScreenState extends State<QuizScreen> {
-  
+  //TODO: add CheckBox; move next by tap
+
+  Map<String, int> _words;
   String word = '', rightAnswer;
   List<String> accentList = [];
   int currentIndex = -1, now = 0;
   String all;
   int delta = 0;
 
+  List<String> shuffleAccent(String word) {
+    List<String> lst = [word];
+    word = word.toLowerCase();
+    for (int i = 0; i < word.length; i++) {
+      if (kVowels.contains(word[i])) {
+        lst.add(word.substring(0, i) +
+            word[i].toUpperCase() +
+            word.substring(i + 1));
+      } else if (word[i] == '(') {
+        break;
+      }
+    }
+    return lst.toSet().toList();
+  }
+
   Future<String> getNext() async {
     int tmp;
-    Map<String, int> map = await readFile();
-    List<String> keys = map.keys.toList();
+    List<String> keys = _words.keys.toList();
     do {
       if (widget.isRandom) {
         var rng = Random();
         while (true) {
-          tmp = rng.nextInt(map.length);
+          tmp = rng.nextInt(_words.length);
           if (tmp != currentIndex) {
             currentIndex = tmp;
             break;
@@ -44,18 +61,17 @@ class _QuizScreenState extends State<QuizScreen> {
       } else {
         currentIndex++;
       }
-      if (currentIndex >= map.length) {
+      if (currentIndex >= _words.length) {
         currentIndex = 0;
       }
-    } while (map[keys[currentIndex]] == 0);
+    } while (_words[keys[currentIndex]] == 0);
     now += 1;
-    all = widget.isRandom ? kInfinity : (map.length - delta).toString();
+    all = widget.isRandom ? kInfinity : (_words.length - delta).toString();
     return keys[currentIndex];
   }
 
   initDelta() async {
-    Map<String, int> map = await readFile();
-    map.forEach((key, value) {
+    _words.forEach((key, value) {
       if (value == 0) delta++;
     });
     print('delta init');
@@ -69,6 +85,7 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   void initState() {
     super.initState();
+    _words = widget.words;
     all = widget.isRandom ? kInfinity : '0';
     if (!widget.isRandom) {
       initDelta();
@@ -119,7 +136,11 @@ class _QuizScreenState extends State<QuizScreen> {
                   rightIndex: accentList.indexOf(rightAnswer),
                   onPressed: () {
                     Future.delayed(const Duration(seconds: 2), () {
-                      setState(() {});
+                      try {
+                        setState(() {});
+                      } catch (e) {
+                        print('Error because QuizScreen was closed');
+                      }
                     });
                   },
                 ),
