@@ -3,7 +3,7 @@
 Приложения для тренировки ударения в русском языке, написанное на Flutter.
 <br>
 <br>
-Скачать релизы <a href="https://github.com/avirias/Grey/releases">здесь</a>.
+Скачать релизы <a href="https://github.com/bytes7bytes7/orthoepy_app/releases">здесь</a>.
 
 # Screenshots
 
